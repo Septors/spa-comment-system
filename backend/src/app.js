@@ -4,6 +4,7 @@ import express from "express";
 import helmet from "helmet";
 import morgan from "morgan";
 import { handleErrorMidlleware } from "./middllewares/errorHandler.js";
+import userRoutes from "./routes/user.routes.js";
 
 const app = express();
 
