@@ -27,6 +27,7 @@ enum TypeFile {
 
 model User {
   id                  Int      @id @default(autoincrement())
+  userName            String   @default("Anonymous")
   email               String   @unique
   password            String
   role                UserRole @default(USER)
@@ -37,31 +38,33 @@ model User {
   files    File[]
   votes    Vote[]
 
-  createdAt  DateTime @default(now())
+  createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 }
 
 model Profile {
   id Int @id @default(autoincrement())
 
-  userName String  @default("Anonymous")
-  avatar   String?
-  about    String?
+  avatar String?
+  about  String?
 
   userId Int  @unique
   user   User @relation(fields: [userId], references: [id])
 
-  createdAt  DateTime @default(now())
+  createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 }
 
 model Comment {
-  id       Int    @id @default(autoincrement())
-  userName String @default("Anonymous")
-  homePage String?
-  email String 
+  id       Int     @id @default(autoincrement())
 
+  userName String  @default("Anonymous")
+  homePage String?
+  email    String
   text String
+  fileName String?
+  filePath String?
+  isResizing Boolean @default(false)
 
   userId   Int?
   parentId Int?
@@ -69,11 +72,12 @@ model Comment {
   files File[]
   votes Vote[]
 
+
   user    User?     @relation(fields: [userId], references: [id])
   parent  Comment?  @relation("Commentreplies", fields: [parentId], references: [id])
   replies Comment[] @relation("Commentreplies")
 
-  createdAt  DateTime @default(now())
+  createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 }
 
@@ -83,13 +87,14 @@ model File {
   userId    Int
   commentId Int
 
-  type    TypeFile
-  url     String
-  content String?
+  fileName String
+  type     TypeFile
+  url      String
+  content  String?
 
   comment   Comment  @relation(fields: [commentId], references: [id])
   user      User     @relation(fields: [userId], references: [id])
-  createdAt  DateTime @default(now())
+  createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 }
 
@@ -102,7 +107,7 @@ model Vote {
   user    User    @relation(fields: [userId], references: [id])
   comment Comment @relation(fields: [commentId], references: [id])
 
-  createdAt  DateTime @default(now())
+  createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
   @@unique([userId, commentId])

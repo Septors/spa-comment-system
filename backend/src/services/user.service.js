@@ -1,4 +1,4 @@
-import prisma from "../lib/prisma.js";
+import prisma from "../config/prisma.js";
 import ApiError from "../utils/apiError.js";
 
 export const checkEmail = async (email) => {
@@ -12,8 +12,21 @@ export const checkEmail = async (email) => {
 export const createUser = async (email, hashedPassword) => {
   return await prisma.user.create({
     data: {
+      userName,
       email,
       password: hashedPassword,
+    },
+  });
+};
+
+export const updateToUser = async (id, password) => {
+  return await prisma.user.update({
+    where: {
+      id,
+    },
+    data: {
+      password,
+      role: USER,
     },
   });
 };

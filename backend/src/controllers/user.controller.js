@@ -5,17 +5,22 @@ import * as token from "../utils/jwtToken.js";
 import * as passwordUtils from "../utils/password.js";
 
 export const registerUser = async (req, res) => {
-  const { email, password } = req.body;
+  const { userName, email, password } = req.body;
 
   const existEmail = await userService.checkEmail(email);
 
-  if (existEmail) {
-    throw new ApiError(409, "User with this email already exists");
-  }
-
   const hashedPassword = await passwordUtils.hashPassword(password);
 
-  const user = await userService.createUser(email, hashedPassword);
+  let user;
+  if (existEmail) {
+    if (existEmail.role === "GUEST") {
+      user = await userService.updateToUser(existEmail.id, hashedPassword);
+    } else {
+      throw new ApiError(409, "User with this email already exists");
+    }
+  } else {
+    user = await userService.createUser(userName, email, hashedPassword);
+  }
 
   const { accessToken, refreshToken } = token.createToken({
     id: user.id,
@@ -29,6 +34,7 @@ export const registerUser = async (req, res) => {
     accessToken,
     user: {
       id: user.id,
+      userName: user.userName,
       email: user.email,
       role: user.role,
     },
@@ -65,6 +71,7 @@ export const loginUser = async (req, res) => {
     accessToken,
     user: {
       id: user.id,
+      userName: user.userName,
       email: user.email,
       role: user.role,
     },

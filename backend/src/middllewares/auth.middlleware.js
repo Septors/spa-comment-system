@@ -1,7 +1,7 @@
-import ApiError from "../utils/apiError";
+import ApiError from "../utils/apiError.js";
 import { verifyToken } from "../utils/jwtToken.js";
 
-export const decodeUserToken = async (req, res, next) => {
+const decodeUserToken = async (req, res, next) => {
   const authHeader = req.headers.authorization;
 
   if (!authHeader || !authHeader.startsWith("Bearer ")) {
@@ -22,3 +22,5 @@ export const decodeUserToken = async (req, res, next) => {
 
   next();
 };
+
+export default decodeUserToken;
