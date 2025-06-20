@@ -5,12 +5,19 @@ import * as imageUtils from "../utils/image.utils.js";
 const maxWidth = parseInt(process.env.MAX_WIDTH_IMAGE);
 const maxHeight = parseInt(process.env.MAX_HEIGHT_IMAGE);
 
+/*Перевіряє розміри файлу за рахунок функці cheImageSize,
+вона приймає обьект файлу з multer.middleware,отримує його мета данні,та звіряє з потрібнимию.*/
 export const checkSizeFile = async (filePath) => {
   const { width, height } = await imageUtils.checkImageSize(filePath);
   return width <= maxWidth && height <= maxHeight;
 };
 
-export const createComment = async (userId, data, isResizing = false) => {
+//створює комментар за рахунок айді користувача який ми отрумуємо через токен доступу та данних с тіла запиту.
+export const createCommentWithoutFile = async (
+  userId,
+  data,
+  isResizing = false
+) => {
   return await prisma.comment.create({
     data: {
       ...data,
@@ -20,24 +27,22 @@ export const createComment = async (userId, data, isResizing = false) => {
   });
 };
 
-export const createFile = async (
-  userId,
-  commentId,
-  fileName,
-  fileUrl,
-  fileType
-) => {
-  return await prisma.file.create({
+//створює коментар без файлу,створюємо файл,підвязуємо файл до коментарю
+export const createComment = async (userId, data, fileData, fileType) => {
+  const comment = await createCommentWithoutFile(userId, data);
+  await prisma.file.create({
     data: {
       userId,
-      commentId: commentId,
-      fileName: fileName,
+      commentId: comment.id,
+      fileName: fileData.filename,
       type: fileType,
-      url: fileUrl,
+      url: fileData.path,
     },
   });
+  await addFileToComment(userId, comment.id, fileData.filename, fileData.path);
 };
 
+//за рахунок того що створення коментаря універсальне,при наявності файлу ми його  підвязуємо до коментаря.
 export const addFileToComment = async (
   userId,
   commentId,
@@ -56,45 +61,23 @@ export const addFileToComment = async (
   });
 };
 
+//створення коментарю в залежності від типу файла,а також його розміру.
 export const createCommentWithFile = async (userId, data, fileData) => {
-  const typeFile = fileData.mimetype === "text/plain" ? "TEXT" : "IMAGE";
+  const typeFile = fileData.mimetype === "text/plain" ? "TEXT" : "IMAGE"; //Перевіряємо типу файлу.
 
+  //Якщо це файловий текст,то створюємо коментар,файл,підвязуємо файл.
   if (typeFile === "TEXT") {
-    const comment = await createComment(userId, data);
-    await createFile(
-      userId,
-      comment.id,
-      fileData.filename,
-      fileData.path,
-      typeFile
-    );
-    await addFileToComment(
-      userId,
-      comment.id,
-      fileData.filename,
-      fileData.path
-    );
+    await createComment(userId, data, fileData, typeFile);
+    return;
   }
 
-  const normalSizeFile = await checkSizeFile(fileData.path);
+  const isSizeValid = await checkSizeFile(fileData.path); //Викликаємо перевірку розміру файлу.
 
-  if (normalSizeFile) {
-    const comment = await createComment(userId, data);
-    await createFile(
-      userId,
-      comment.id,
-      fileData.filename,
-      fileData.path,
-      typeFile
-    );
-    await addFileToComment(
-      userId,
-      comment.id,
-      fileData.filename,
-      fileData.path
-    );
+  //Якщо в нормі то створюємо коментар,файл,підвязуємо файл під коментар,а якщо ні то створяємо коментар,передаємо в чергу для зміну черги.
+  if (isSizeValid) {
+    await createComment(userId, data, fileData, typeFile);
   } else {
-    const comment = await createComment(userId, data, true);
+    const comment = await createCommentWithoutFile(userId, data, true);
     await resizeQueue.add("resize-image", {
       filePath: fileData.path,
       outPutPath: fileData.filename,
