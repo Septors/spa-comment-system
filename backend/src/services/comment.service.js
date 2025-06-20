@@ -88,3 +88,40 @@ export const createCommentWithFile = async (userId, data, fileData) => {
     });
   }
 };
+
+//перевірка вхідних данних для фільрації
+export const checkQuerySelect = (querySelect) => {
+  const limit = querySelect.limit === "25" ? parseInt(querySelect.limit) : 25;
+  const page = querySelect.page > 0 ? parseInt(querySelect.page) : 1;
+  const skip = (page - 1) * limit;
+  const validSortBy = ["userName", "email", "createdAt"];
+  const sortBy = validSortBy.includes(querySelect.sortBy)
+    ? querySelect.sortBy
+    : "createdAt";
+  const orderBy = querySelect.orderBy === "desc" ? "desc" : "asc";
+  const userId = querySelect.userId ? userId : null;
+
+  return { limit, page, skip, validSortBy, sortBy, orderBy, userId };
+};
+
+//фільтрація та отримання  коментарів
+export const getFilterComments = async (querySelect) => {
+  const { limit, skip, sortBy, orderBy, userId } = querySelect;
+
+  const filterCommentCollection = await prisma.comment.findMany({
+    where: {
+      parent: null,
+      ...(userId && { userId }),
+    },
+    skip,
+    take: limit,
+    orderBy: {
+      [sortBy]: orderBy,
+    },
+    include: {
+      replies: true,
+    },
+  });
+
+  return filterCommentCollection;
+};

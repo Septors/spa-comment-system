@@ -1,5 +1,5 @@
 import express from "express";
-import { createComment } from "..//controllers/comment.controller.js";
+import * as commentController from "..//controllers/comment.controller.js";
 import decodeUserToken from "../middllewares/auth.middlleware.js";
 import { upload } from "../middllewares/multer.middleware.js";
 import { checkTypeUser } from "../middllewares/user.type.middlreware.js";
@@ -15,7 +15,9 @@ commentRoutes.post(
   catchAsync(checkTypeUser),
   catchAsync(decodeUserToken),
   upload.single("file"),
-  catchAsync(createComment)
+  catchAsync(commentController.createComment)
 );
+
+commentRoutes.get("/", catchAsync(commentController.getComment));
 
 export default commentRoutes;
