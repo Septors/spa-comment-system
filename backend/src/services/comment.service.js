@@ -1,4 +1,5 @@
 import prisma from "../config/prisma.js";
+import redisClient from "../config/redis.js";
 import { resizeQueue } from "../redis/queues.js";
 import * as imageUtils from "../utils/image.utils.js";
 
@@ -18,13 +19,37 @@ export const createCommentWithoutFile = async (
   data,
   isResizing = false
 ) => {
-  return await prisma.comment.create({
+  const comment = await prisma.comment.create({
     data: {
       ...data,
       userId,
       isResizing,
     },
   });
+  const lifoKey = "comments:lifo";
+  const lifoCahefilter = await redisClient.llen(lifoKey);
+
+  if (lifoCahefilter) {
+    await redisClient.lpush(lifoKey, JSON.stringify(comment));
+    await redisClient.ltrim(lifoKey, 0, 24);
+  } else {
+    const lifoCollection = await prisma.comment.findMany({
+      where: {
+        parentId: null,
+      },
+      orderBy: {
+        createdAt: "desc",
+      },
+      include: {
+        replies: true,
+      },
+      take: 25,
+    });
+    const listLifoComment = lifoCollection.map((comm) => JSON.stringify(comm));
+    if (listLifoComment.length) {
+      await redisClient.lpush(lifoKey, ...listLifoComment);
+    }
+  }
 };
 
 //створює коментар без файлу,створюємо файл,підвязуємо файл до коментарю
@@ -99,29 +124,53 @@ export const checkQuerySelect = (querySelect) => {
     ? querySelect.sortBy
     : "createdAt";
   const orderBy = querySelect.orderBy === "desc" ? "desc" : "asc";
-  const userId = querySelect.userId ? userId : null;
+  const userId = querySelect.userId ? querySelect.userId : null;
 
   return { limit, page, skip, validSortBy, sortBy, orderBy, userId };
 };
 
 //фільтрація та отримання  коментарів
 export const getFilterComments = async (querySelect) => {
-  const { limit, skip, sortBy, orderBy, userId } = querySelect;
+  const { limit, page, skip, sortBy, orderBy, userId } = querySelect;
 
-  const filterCommentCollection = await prisma.comment.findMany({
-    where: {
-      parent: null,
-      ...(userId && { userId }),
-    },
-    skip,
-    take: limit,
-    orderBy: {
-      [sortBy]: orderBy,
-    },
-    include: {
-      replies: true,
-    },
-  });
+  const filterKey = `comment:filter:${sortBy}:order:${orderBy}:page:${page}`;
 
-  return filterCommentCollection;
+  const cashedComments = await redisClient.get(filterKey);
+
+  if (cashedComments && cashedComments.length) {
+    return JSON.parse(cashedComments);
+  } else {
+    const filteredComments = await prisma.comment.findMany({
+      where: {
+        parentId: null,
+        ...(userId && { userId }),
+      },
+      skip,
+      take: limit,
+      orderBy: {
+        [sortBy]: orderBy,
+      },
+      include: {
+        replies: true,
+      },
+    });
+
+    if (filteredComments) {
+      await redisClient.set(
+        filterKey,
+        JSON.stringify(filteredComments),
+        "EX",
+        60
+      );
+    }
+    return filteredComments;
+  }
+};
+
+export const getLifoComments = async () => {
+  const lifoCashKey = "comments:lifo";
+
+  const lifoCollection = await redisClient.lrange(lifoCashKey, 0, -1);
+  const comments = lifoCollection.map((comm) => JSON.parse(comm));
+  return comments;
 };

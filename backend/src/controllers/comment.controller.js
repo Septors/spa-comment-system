@@ -15,7 +15,12 @@ export const createComment = async (req, res) => {
 };
 
 export const getComment = async (req, res) => {
-  const resultFilter = await commentService.getFilterComments(req.query);
-
-  res.status(200).json({ message: "Філтрація пройшла успішно", resultFilter });
+  const queryData = req.query;
+  if (Object.keys(queryData).length === 0) {
+    const lifoComment = await commentService.getLifoComments();
+    res.json(lifoComment);
+  } else {
+    const resultFilter = await commentService.getFilterComments(queryData);
+    res.json(resultFilter);
+  }
 };
