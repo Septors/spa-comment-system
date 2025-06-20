@@ -80,10 +80,13 @@ export const loginUser = async (req, res) => {
 
 export const userlogout = async (req, res) => {
   const userId = req.user.id;
+  const userToken = req.user.accessToken;
 
   await userService.clearUserToken(userId);
 
   await cookie.clearTokenCookie(res);
+
+  await userService.sendUserTokenToBlacklist(userToken);
 
   res.status(200).json({ message: "User logout succesfully" });
 };

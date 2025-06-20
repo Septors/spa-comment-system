@@ -1,5 +1,6 @@
 import prisma from "../config/prisma.js";
 import ApiError from "../utils/apiError.js";
+import redisClient from "../config/redis.js";
 
 export const checkEmail = async (email) => {
   return await prisma.user.findUnique({
@@ -77,4 +78,8 @@ export const getUserValideToken = async (id) => {
 export const matchToken = async (id, currentToken) => {
   const validToken = await getUserValideToken(id);
   return validToken === currentToken ? validToken : false;
+};
+
+export const sendUserTokenToBlacklist = async (accessToken) => {
+  await redisClient.set(`blackList:${accessToken}`, "1", "EX", 900);
 };
