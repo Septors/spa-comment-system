@@ -18,4 +18,6 @@ export const commentSchema = Joi.object({
     "max.text": "Превищено макисмально допустимий вміст коменттарю",
     "any.required": "Текст в комментарі є обовязковим",
   }),
+  captchaId: Joi.string().optional(),
+  captcha: Joi.string().optional(),
 });

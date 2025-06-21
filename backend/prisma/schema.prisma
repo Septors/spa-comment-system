@@ -62,6 +62,8 @@ model Comment {
   homePage String?
   email    String
   text String
+  captchaId String?
+  captcha String?
   fileName String?
   filePath String?
   isResizing Boolean @default(false)
