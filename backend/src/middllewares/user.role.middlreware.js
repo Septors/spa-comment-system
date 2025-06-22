@@ -1,4 +1,4 @@
-import prisma from "../lib/prisma";
+import prisma from "../config/prisma.js";
 import { createToken } from "../utils/jwtToken.js";
 
 export const checkTypeUser = async (req, res, next) => {
@@ -6,7 +6,7 @@ export const checkTypeUser = async (req, res, next) => {
   const { userName, email } = req.body;
   let user;
   if (authHeader) {
-    next();
+    return next();
   } else {
     user = await prisma.user.create({
       data: {

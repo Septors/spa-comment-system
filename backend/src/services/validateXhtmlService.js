@@ -1,4 +1,4 @@
-import ApiError from "../utils/apiError";
+import ApiError from "../utils/apiError.js";
 const allowedTags = ["a", "code", "i", "strong"];
 const allowedAttrs = {
   a: ["href", "title"],

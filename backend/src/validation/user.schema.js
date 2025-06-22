@@ -1,7 +1,8 @@
 import Joi from "joi";
 
 export const registerSchema = Joi.object({
-  userName: Joi.string().required().messages({
+  userName: Joi.string().trim().min(3).max(30).required().messages({
+    "string.empty": "Імʼя не може бути порожнім або з одних пробілів",
     "string.userName": "Неккоректне ім'я користувача",
     "any.required": "ім'я є обовязковим",
   }),
@@ -10,9 +11,9 @@ export const registerSchema = Joi.object({
     "any.required": "Пошта обовьязкова",
   }),
   password: Joi.string()
-    .min(6)
+    .min(8)
     .max(64)
-    .pattern(new RegExp("^[a-zA-Z0-9!@#$%^&*()_+\\-=]+$"))
+    .pattern(new RegExp("^(?=.*[A-Za-z])(?=.*\\d)[A-Za-z\\d]{8,}$"))
     .required()
     .messages({
       "string.min": "Пароль дуже короткий",
@@ -26,14 +27,14 @@ export const registerSchema = Joi.object({
 });
 
 export const loginSchema = Joi.object({
-  email: Joi.string().email().required().messages({
+  email: Joi.string().trim().min(3).max(30).email().required().messages({
     "string.email": "Некоректна пошта",
     "any.required": "Пошта обовьязкова",
   }),
   password: Joi.string()
-    .min(6)
+    .min(8)
     .max(64)
-    .pattern(new RegExp("^[a-zA-Z0-9!@#$%^&*()_+\\-=]+$"))
+    .pattern(new RegExp("^(?=.*[A-Za-z])(?=.*\\d)[A-Za-z\\d]{8,}$"))
     .required()
     .messages({
       "string.min": "Пароль дуже короткий",

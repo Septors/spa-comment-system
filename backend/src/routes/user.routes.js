@@ -1,7 +1,7 @@
 import express from "express";
 import * as userController from "../controllers/user.controller.js";
-import * as authMiddlleware from "../middllewares/auth.middlleware.js";
-import validateRequest from "../middllewares/validation.middlleware.js";
+import decodeUserToken from "../middllewares/token.middlleware.js";
+import validateRequest from "../middllewares/validateSchema.middlleware.js";
 import catchAsync from "../utils/catchAsync.js";
 import * as valueSchema from "../validation/user.schema.js";
 
@@ -21,13 +21,13 @@ userRoutes.post(
 
 userRoutes.delete(
   "/logout",
-  catchAsync(authMiddlleware.decodeUserToken),
+  catchAsync(decodeUserToken),
   catchAsync(userController.userlogout)
 );
 
 userRoutes.patch(
   "/refresh-token",
-  catchAsync(authMiddlleware.decodeUserToken),
+  catchAsync(decodeUserToken),
   catchAsync(userController.getNewToken)
 );
 

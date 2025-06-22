@@ -5,7 +5,8 @@ const validateRequest = (schema) => {
     const { error, value } = schema.validate(req.body);
 
     if (error) {
-      throw new ApiError(400, "Error validate");
+      const message = error.details[0].message;
+      throw new ApiError(400, message);
     }
 
     req.body = value;

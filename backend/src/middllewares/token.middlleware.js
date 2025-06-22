@@ -17,12 +17,11 @@ const decodeUserToken = async (req, res, next) => {
     throw new ApiError(401, "Access token is blackisted");
   }
 
-  let decoded;
-  try {
-    decoded = verifyToken(token, "access");
-  } catch (err) {
+  const decoded = verifyToken(token, "access");
+  if (!decoded) {
     throw new ApiError(401, "Unauthorization: Token verifycation failed ");
   }
+
   req.user = {
     id: decoded.id,
     role: decoded.role,

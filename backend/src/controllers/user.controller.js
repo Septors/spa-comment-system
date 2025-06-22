@@ -21,7 +21,6 @@ export const registerUser = async (req, res) => {
   } else {
     user = await userService.createUser(userName, email, hashedPassword);
   }
-
   const { accessToken, refreshToken } = token.createToken({
     id: user.id,
     role: user.role,
@@ -44,15 +43,15 @@ export const registerUser = async (req, res) => {
 export const loginUser = async (req, res) => {
   const { email, password } = req.body;
 
-  const user = userService.checkEmail(email);
+  const user = await userService.checkEmail(email);
 
   if (!user) {
     throw new ApiError(404, "User with this email not found");
   }
 
   const comarePassword = await passwordUtils.comparePassword(
-    currentPassword,
-    password
+    password,
+    user.password
   );
 
   if (!comarePassword) {
@@ -63,6 +62,7 @@ export const loginUser = async (req, res) => {
     id: user.id,
     role: user.role,
   });
+
   await userService.saveRefreshToken(user.id, refreshToken);
   await cookie.setTokenCookie(res, refreshToken);
 
@@ -96,14 +96,16 @@ export const getNewToken = async (req, res) => {
   const valideRefreshToken = req.cookies.refreshToken;
 
   const match = await userService.matchToken(userId, valideRefreshToken);
-
   if (!match) {
     throw new ApiError(403, "Unauhorization: incorrect refresh token");
   }
 
   const decode = token.verifyToken(valideRefreshToken, "refresh");
 
-  const { accessToken, refreshToken } = token.createToken(decode);
+  const { accessToken, refreshToken } = token.createToken({
+    id: decode.id,
+    role: decode.role,
+  });
 
   res.status(200).json({
     message: "Token has been replaced ",

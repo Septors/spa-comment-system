@@ -1,6 +1,7 @@
 import prisma from "../config/prisma.js";
 import redisClient from "../config/redis.js";
 import { resizeQueue } from "../redis/queues.js";
+import ApiError from "../utils/apiError.js";
 import * as imageUtils from "../utils/image.utils.js";
 
 const maxWidth = parseInt(process.env.MAX_WIDTH_IMAGE);
@@ -19,6 +20,7 @@ export const createCommentWithoutFile = async (
   data,
   isResizing = false
 ) => {
+  console.log(userId);
   const comment = await prisma.comment.create({
     data: {
       ...data,
@@ -50,14 +52,15 @@ export const createCommentWithoutFile = async (
       await redisClient.lpush(lifoKey, ...listLifoComment);
     }
   }
+  return comment;
 };
 
 //створює коментар без файлу,створюємо файл,підвязуємо файл до коментарю
 export const createComment = async (userId, data, fileData, fileType) => {
   const comment = await createCommentWithoutFile(userId, data);
-  await prisma.file.create({
+  const newComment = await prisma.file.create({
     data: {
-      userId,
+      userId: userId,
       commentId: comment.id,
       fileName: fileData.filename,
       type: fileType,
@@ -116,61 +119,84 @@ export const createCommentWithFile = async (userId, data, fileData) => {
 
 //перевірка вхідних данних для фільрації
 export const checkQuerySelect = (querySelect) => {
-  const limit = querySelect.limit === "25" ? parseInt(querySelect.limit) : 25;
-  const page = querySelect.page > 0 ? parseInt(querySelect.page) : 1;
+  console.log(querySelect);
+  const limit = querySelect.limit === "5" ? parseInt(querySelect.limit) : 5;
+  const page = parseInt(querySelect.page) > 0 ? parseInt(querySelect.page) : 1;
   const skip = (page - 1) * limit;
   const validSortBy = ["userName", "email", "createdAt"];
   const sortBy = validSortBy.includes(querySelect.sortBy)
     ? querySelect.sortBy
     : "createdAt";
   const orderBy = querySelect.orderBy === "desc" ? "desc" : "asc";
-  const userId = querySelect.userId ? querySelect.userId : null;
 
-  return { limit, page, skip, validSortBy, sortBy, orderBy, userId };
+  const userId = parseInt(querySelect.userId)
+    ? parseInt(querySelect.userId)
+    : null;
+  console.log(page);
+  return { limit, page, skip, sortBy, orderBy, userId };
 };
 
 //фільтрація та отримання  коментарів
 export const getFilterComments = async (querySelect) => {
-  const { limit, page, skip, sortBy, orderBy, userId } = querySelect;
+  const { limit, page, skip, sortBy, orderBy, userId } =
+    checkQuerySelect(querySelect);
 
-  const filterKey = `comment:filter:${sortBy}:order:${orderBy}:page:${page}`;
+  const filterKey = `comment:filter:${sortBy}:order:${orderBy}:page:${page}:userId:${userId}`;
 
-  const cashedComments = await redisClient.get(filterKey);
-
-  if (cashedComments && cashedComments.length) {
-    return JSON.parse(cashedComments);
-  } else {
-    const filteredComments = await prisma.comment.findMany({
-      where: {
-        parentId: null,
-        ...(userId && { userId }),
-      },
-      skip,
-      take: limit,
-      orderBy: {
-        [sortBy]: orderBy,
-      },
-      include: {
-        replies: true,
-      },
-    });
-
-    if (filteredComments) {
-      await redisClient.set(
-        filterKey,
-        JSON.stringify(filteredComments),
-        "EX",
-        60
-      );
-    }
-    return filteredComments;
+  const cachedComments = await redisClient.get(filterKey);
+  console.log(cachedComments);
+  if (cachedComments) {
+    return JSON.parse(cachedComments);
   }
+  const filteredComments = await prisma.comment.findMany({
+    where: {
+      parentId: null,
+      ...(userId && { userId }),
+    },
+    skip,
+    take: limit,
+    orderBy: {
+      [sortBy]: orderBy,
+    },
+    include: {
+      replies: true,
+    },
+  });
+
+  await redisClient.set(filterKey, JSON.stringify(filteredComments), "EX", 60);
+  console.log(filteredComments);
+  return filteredComments;
 };
 
 export const getLifoComments = async () => {
   const lifoCashKey = "comments:lifo";
 
-  const lifoCollection = await redisClient.lrange(lifoCashKey, 0, -1);
-  const comments = lifoCollection.map((comm) => JSON.parse(comm));
-  return comments;
+  const lifoCashFilter = await redisClient.lrange(lifoCashKey, 0, -1);
+  console.log(lifoCashFilter);
+  if (lifoCashFilter.length > 0) {
+    return lifoCashFilter.map((comm) => JSON.parse(comm));
+  }
+
+  const newlifoCollection = await prisma.comment.findMany({
+    where: {
+      parentId: null,
+    },
+    take: 25,
+    orderBy: {
+      createdAt: "desc",
+    },
+    include: {
+      replies: true,
+    },
+  });
+  await redisClient.del(lifoCashKey);
+  if (newlifoCollection.length > 1) {
+    await redisClient.rpush(
+      lifoCashKey,
+      ...newlifoCollection.map((comm) => JSON.stringify(comm))
+    );
+    return newlifoCollection;
+  } else {
+    throw new ApiError(404, "User comment not found in base");
+  }
 };

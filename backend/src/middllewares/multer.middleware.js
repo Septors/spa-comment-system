@@ -1,8 +1,10 @@
 import multer from "multer";
+import path from "path";
 
 const storage = multer.diskStorage({
   destination: (req, file, cb) => {
-    cb(null, "../../uploads");
+    const uploadPath = path.resolve("uploads");
+    cb(null, uploadPath);
   },
   filename: (req, file, cb) => {
     const ext = path.extname(file.originalname);
@@ -10,7 +12,7 @@ const storage = multer.diskStorage({
   },
 });
 
-const allowedMimeType = ["image/jpg", "image/gif", "image/png", "text/plain"];
+const allowedMimeType = ["image/jpeg", "image/gif", "image/png", "text/plain"];
 
 const fileFilter = (req, file, cb) => {
   const isValid = allowedMimeType.includes(file.mimetype);

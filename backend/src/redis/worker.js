@@ -6,6 +6,7 @@ import { resizeImage } from "../utils/image.utils.js";
 const resizeWorker = new Worker(
   "resize-image",
   async (job) => {
+    console.log(job.data);
     const { filePath, outPutPath, width, height, commentId, userId } = job.data;
     const newPathFile = await resizeImage(filePath, outPutPath, width, height);
     await prisma.comment.update({
