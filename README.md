@@ -42,8 +42,11 @@ git clone https://github.com/Septors/spa-comment-system
 cd spa-comment-system
 
 # 2. Установить зависимости и запустить сервер
+
 создание файла ".env" на основе данных с файла ".env.example"
+
 npm install
+
 npm start
 
 # 3. Запустить сервисы
