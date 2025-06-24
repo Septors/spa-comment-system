@@ -41,12 +41,12 @@
 git clone https://github.com/Septors/spa-comment-system
 cd spa-comment-system
 
-# 2. Запустить сервисы
-docker-compose up -d
-
-# 3. Установить зависимости и запустить сервер
+# 2. Установить зависимости и запустить сервер
 npm install
 npm start
+
+# 3. Запустить сервисы
+docker-compose up -d
 
 # 4. Запуск APi:
 - frontend: http://localhost:3000/
