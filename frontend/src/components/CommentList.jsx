@@ -12,7 +12,6 @@ export default function CommentList() {
   const [replyTo, setReplyTo] = useState(null);
   const [filtered, setFiltered] = useState(false);
 
-  // Первый запрос — без пагинации и сортировки (LIFO)
   const fetchLifoComments = async () => {
     try {
       setLoading(true);
@@ -25,7 +24,7 @@ export default function CommentList() {
     }
   };
 
-  // Запрос с фильтрацией и пагинацией
+
   const fetchFilteredComments = async () => {
     try {
       setLoading(true);
@@ -45,19 +44,19 @@ export default function CommentList() {
     }
   };
 
-  // Загрузка начальных комментариев
+
   useEffect(() => {
     fetchLifoComments();
   }, []);
 
-  // При смене фильтров загружаем отфильтрованные
+
   useEffect(() => {
     if (filtered && sortField) {
       fetchFilteredComments();
     }
   }, [sortField, sortOrder, page]);
 
-  // Обработка смены сортировки
+
   const handleSortChange = (field) => {
     setSortField(field);
     setSortOrder((prev) => (sortField === field ? (prev === "asc" ? "desc" : "asc") : "asc"));
@@ -65,12 +64,12 @@ export default function CommentList() {
     setFiltered(true);
   };
 
-  // Открыть форму ответа под комментарием с id commentId
+
   const handleReply = (commentId) => {
     setReplyTo(commentId);
   };
 
-  // Рекурсивный рендер комментария и его дочерних ответов
+
   const renderComment = (comment, isReply = false) => (
     <div
       key={comment.id}
@@ -100,7 +99,7 @@ export default function CommentList() {
 
       <button onClick={() => handleReply(comment.id)}>Ответить</button>
 
-      {/* Форма ответа под этим комментарием */}
+
       {replyTo === comment.id && (
         <CommentForm
           parentId={comment.id}
@@ -111,7 +110,7 @@ export default function CommentList() {
         />
       )}
 
-      {/* Рендер дочерних комментариев (replies) */}
+
       {comment.replies && comment.replies.length > 0 && (
         <div className="replies">
           {comment.replies.map((reply) => renderComment(reply, true))}

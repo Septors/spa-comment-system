@@ -10,7 +10,7 @@ export default function CommentForm({ onCommentSent }) {
   const [homePage, setHomePage] = useState("");
   const [text, setText] = useState("");
   const [file, setFile] = useState(null);
-  const [preview, setPreview] = useState(null); // для превью картинки
+  const [preview, setPreview] = useState(null); 
 
   const [captchaKey, setCaptchaKey] = useState(null);
   const [captchaImage, setCaptchaImage] = useState(null);
@@ -24,7 +24,7 @@ export default function CommentForm({ onCommentSent }) {
     if (!user) fetchCaptcha();
   }, [user]);
 
-  // освобождаем URL превью при смене файла / размонтировании
+
   useEffect(() => {
     if (!file) {
       setPreview(null);

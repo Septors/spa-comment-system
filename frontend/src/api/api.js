@@ -1,10 +1,10 @@
 import axios from "axios";
 
 const api = axios.create({
-  baseURL: "http://localhost:5000" // подкорректируй под свой backend
+  baseURL: "http://localhost:5000" 
 });
 
-// Автоматически подставляем токен, если есть
+
 api.interceptors.request.use((config) => {
   const token = localStorage.getItem("accessToken");
   if (token) {
