@@ -5,18 +5,22 @@ import * as token from "../utils/jwtToken.js";
 import * as passwordUtils from "../utils/password.js";
 
 export const registerUser = async (req, res) => {
-  const { email, password } = req.body;
+  const { userName, email, password } = req.body;
 
   const existEmail = await userService.checkEmail(email);
 
-  if (existEmail) {
-    throw new ApiError(409, "User with this email already exists");
-  }
-
   const hashedPassword = await passwordUtils.hashPassword(password);
 
-  const user = await userService.createUser(email, hashedPassword);
-
+  let user;
+  if (existEmail) {
+    if (existEmail.role === "GUEST") {
+      user = await userService.updateToUser(existEmail.id, hashedPassword);
+    } else {
+      throw new ApiError(409, "User with this email already exists");
+    }
+  } else {
+    user = await userService.createUser(userName, email, hashedPassword);
+  }
   const { accessToken, refreshToken } = token.createToken({
     id: user.id,
     role: user.role,
@@ -29,6 +33,7 @@ export const registerUser = async (req, res) => {
     accessToken,
     user: {
       id: user.id,
+      userName: user.userName,
       email: user.email,
       role: user.role,
     },
@@ -38,15 +43,15 @@ export const registerUser = async (req, res) => {
 export const loginUser = async (req, res) => {
   const { email, password } = req.body;
 
-  const user = userService.checkEmail(email);
+  const user = await userService.checkEmail(email);
 
   if (!user) {
     throw new ApiError(404, "User with this email not found");
   }
 
   const comarePassword = await passwordUtils.comparePassword(
-    currentPassword,
-    password
+    password,
+    user.password
   );
 
   if (!comarePassword) {
@@ -57,6 +62,7 @@ export const loginUser = async (req, res) => {
     id: user.id,
     role: user.role,
   });
+
   await userService.saveRefreshToken(user.id, refreshToken);
   await cookie.setTokenCookie(res, refreshToken);
 
@@ -65,6 +71,7 @@ export const loginUser = async (req, res) => {
     accessToken,
     user: {
       id: user.id,
+      userName: user.userName,
       email: user.email,
       role: user.role,
     },
@@ -73,10 +80,13 @@ export const loginUser = async (req, res) => {
 
 export const userlogout = async (req, res) => {
   const userId = req.user.id;
+  const userToken = req.user.accessToken;
 
   await userService.clearUserToken(userId);
 
   await cookie.clearTokenCookie(res);
+
+  await userService.sendUserTokenToBlacklist(userToken);
 
   res.status(200).json({ message: "User logout succesfully" });
 };
@@ -86,14 +96,16 @@ export const getNewToken = async (req, res) => {
   const valideRefreshToken = req.cookies.refreshToken;
 
   const match = await userService.matchToken(userId, valideRefreshToken);
-
   if (!match) {
     throw new ApiError(403, "Unauhorization: incorrect refresh token");
   }
 
   const decode = token.verifyToken(valideRefreshToken, "refresh");
 
-  const { accessToken, refreshToken } = token.createToken(decode);
+  const { accessToken, refreshToken } = token.createToken({
+    id: decode.id,
+    role: decode.role,
+  });
 
   res.status(200).json({
     message: "Token has been replaced ",

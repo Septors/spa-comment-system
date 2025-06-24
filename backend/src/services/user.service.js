@@ -1,4 +1,5 @@
-import prisma from "../lib/prisma.js";
+import prisma from "../config/prisma.js";
+import redisClient from "../config/redis.js";
 import ApiError from "../utils/apiError.js";
 
 export const checkEmail = async (email) => {
@@ -9,11 +10,25 @@ export const checkEmail = async (email) => {
   });
 };
 
-export const createUser = async (email, hashedPassword) => {
+export const createUser = async (userName, email, hashedPassword) => {
   return await prisma.user.create({
     data: {
+      userName,
       email,
       password: hashedPassword,
+      role: "USER",
+    },
+  });
+};
+
+export const updateToUser = async (id, password) => {
+  return await prisma.user.update({
+    where: {
+      id,
+    },
+    data: {
+      password,
+      role: USER,
     },
   });
 };
@@ -24,7 +39,7 @@ export const saveRefreshToken = async (userId, token) => {
       id: userId,
     },
     data: {
-      currentTefreshToken: token,
+      currentRefreshToken: token,
     },
   });
 };
@@ -42,6 +57,9 @@ export const clearUserToken = async (id) => {
     where: {
       id,
     },
+    data: {
+      currentRefreshToken: null,
+    },
   });
 };
 
@@ -54,14 +72,17 @@ export const getUserValideToken = async (id) => {
       currentRefreshToken: true,
     },
   });
-
   if (!userToken) {
     throw new ApiError(403, "Unauthorization: user havn't valide token");
   }
-  return userToken.currentTefreshToken;
+  return userToken.currentRefreshToken;
 };
 
 export const matchToken = async (id, currentToken) => {
   const validToken = await getUserValideToken(id);
   return validToken === currentToken ? validToken : false;
+};
+
+export const sendUserTokenToBlacklist = async (accessToken) => {
+  await redisClient.set(`blackList:${accessToken}`, "1", "EX", 900);
 };
