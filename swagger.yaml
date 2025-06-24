@@ -1,0 +1,417 @@
+openapi: 3.0.0
+info:
+  title: SPA Comment API
+  version: 1.0.0
+servers:
+  - url: http://localhost:5000
+
+paths:
+  /user/register:
+    post:
+      summary: Реєстрація користувача
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                userName:
+                  type: string
+                  description: Ім'я користувача (3-30 символів)
+                  example: Septor
+                email:
+                  type: string
+                  format: email
+                  description: Електронна пошта
+                  example: test@example.com
+                password:
+                  type: string
+                  description: Пароль (мінімум 8 символів, букви і цифри)
+                  example: password123
+                confirmPassword:
+                  type: string
+                  description: Підтвердження пароля (має співпадати з password)
+                  example: password123
+              required:
+                - userName
+                - email
+                - password
+                - confirmPassword
+      responses:
+        '201':
+          description: Користувач створений
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+                    example: Користувач створен
+                  accessToken:
+                    type: string
+                    example: eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...
+                  user:
+                    type: object
+                    properties:
+                      id:
+                        type: integer
+                        example: 1
+                      userName:
+                        type: string
+                        example: Septor
+                      email:
+                        type: string
+                        example: test@example.com
+                      role:
+                        type: string
+                        enum: [GUEST, USER, MODERATOR, ADMIN]
+                        example: USER
+        '409':
+          description: Користувач з таким email вже існує
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+                    example: User with this email already exists
+
+  /user/login:
+    post:
+      summary: Вхід користувача
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                email:
+                  type: string
+                  format: email
+                  example: test@example.com
+                password:
+                  type: string
+                  example: password123
+              required:
+                - email
+                - password
+      responses:
+        '200':
+          description: Успішний вхід
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+                    example: Accesss enter
+                  accessToken:
+                    type: string
+                    example: eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...
+                  user:
+                    type: object
+                    properties:
+                      id:
+                        type: integer
+                        example: 1
+                      userName:
+                        type: string
+                        example: Septor
+                      email:
+                        type: string
+                        example: test@example.com
+                      role:
+                        type: string
+                        enum: [GUEST, USER, MODERATOR, ADMIN]
+                        example: USER
+        '404':
+          description: Користувач з таким email не знайдений
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+                    example: User with this email not found
+        '409':
+          description: Неправильний пароль
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+                    example: Incorrect password
+
+  /user/logout:
+    delete:
+      summary: Вихід користувача з системи
+      security:
+        - bearerAuth: []
+      responses:
+        '200':
+          description: Користувач успішно вийшов
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+                    example: User logout succesfully
+        '401':
+          description: Неавторизований запит
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+                    example: Unauthorized
+
+  /user/refresh-token:
+    patch:
+      summary: Оновлення access-токена за допомогою refresh-токена
+      security:
+        - bearerAuth: []
+      responses:
+        '200':
+          description: Токен успішно оновлено
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+                    example: Token has been replaced
+                  accessToken:
+                    type: string
+                    example: eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...
+        '403':
+          description: Некоректний refresh-токен
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+                    example: Unauhorization: incorrect refresh token
+
+  /comments:
+    post:
+      summary: Створення коментаря
+      description: Дозволяє створити коментар з можливістю прикріплення файлу (текст чи зображення)
+      requestBody:
+        required: true
+        content:
+          multipart/form-data:
+            schema:
+              type: object
+              properties:
+                userName:
+                  type: string
+                  description: Ім'я користувача
+                  example: Septor
+                email:
+                  type: string
+                  format: email
+                  description: Email користувача
+                  example: test@example.com
+                homePage:
+                  type: string
+                  format: uri
+                  description: Посилання на домашню сторінку (опційно)
+                  example: https://example.com
+                parentId:
+                  type: integer
+                  description: ID батьківського коментаря (якщо відповідь)
+                text:
+                  type: string
+                  maxLength: 300
+                  description: Текст коментаря
+                  example: Це мій коментар
+                captchaId:
+                  type: string
+                  description: ID капчі (опційно)
+                captchaText:
+                  type: string
+                  description: Текст капчі (опційно)
+                file:
+                  type: string
+                  format: binary
+                  description: Файл (текстовий або зображення) (опційно)
+              required:
+                - userName
+                - email
+                - text
+      responses:
+        '201':
+          description: Коментар створено успішно
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+                    example: Comment created
+        '400':
+          description: Помилка валідації
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+                    example: Некоректні дані в запиті
+
+    get:
+      summary: Отримати список коментарів
+      description: Повертає список коментарів з можливістю фільтрації, сортування та пагінації
+      parameters:
+        - in: query
+          name: limit
+          schema:
+            type: integer
+            default: 25
+            enum: [25]
+          description: Кількість коментарів на сторінку (фіксовано 25)
+        - in: query
+          name: page
+          schema:
+            type: integer
+            default: 1
+          description: Номер сторінки (починаючи з 1)
+        - in: query
+          name: sortBy
+          schema:
+            type: string
+            enum: [userName, email, createdAt]
+            default: createdAt
+          description: Поле для сортування
+        - in: query
+          name: orderBy
+          schema:
+            type: string
+            enum: [asc, desc]
+            default: asc
+          description: Напрямок сортування
+        - in: query
+          name: userId
+          schema:
+            type: integer
+          description: Фільтр за ID користувача (опційно)
+      responses:
+        '200':
+          description: Список коментарів
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Comment'
+        '404':
+          description: Коментарі не знайдені
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+                    example: User comment not found in base
+
+components:
+  securitySchemes:
+    bearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+
+  schemas:
+    Comment:
+      type: object
+      properties:
+        id:
+          type: integer
+          example: 1
+        userName:
+          type: string
+          example: Septor
+        email:
+          type: string
+          example: test@example.com
+        homePage:
+          type: string
+          example: https://example.com
+        text:
+          type: string
+          example: Це мій коментар
+        parentId:
+          type: integer
+          nullable: true
+          example: null
+        createdAt:
+          type: string
+          format: date-time
+          example: '2025-06-24T12:34:56Z'
+        files:
+          type: array
+          items:
+            type: object
+            properties:
+              fileName:
+                type: string
+                example: image.png
+              url:
+                type: string
+                example: /uploads/image.png
+        replies:
+          type: array
+          items:
+            $ref: '#/components/schemas/Comment'
+/captcha:
+  get:
+    summary: Отримати нову CAPTCHA
+    description: Створює нову CAPTCHA, зберігає її у Redis, повертає SVG та ідентифікатор.
+    responses:
+      '201':
+        description: CAPTCHA успішно створена
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                captchaId:
+                  type: string
+                  format: uuid
+                  example: 7f3d1f02-876e-4d9a-9a84-2c91d26c812f
+                captchaSvg:
+                  type: string
+                  description: SVG-код зображення CAPTCHA
+                  example: "<svg xmlns='http://www.w3.org/2000/svg' ...</svg>"
+                captchaText:
+                  type: string
+                  description: Текст CAPTCHA (видно лише на боці сервера або в dev-режимі)
+                  example: "xA7dB9"
+      '500':
+        description: Помилка при створенні CAPTCHA
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                message:
+                  type: string
+                  example: Не вдалося створити CAPTCHA

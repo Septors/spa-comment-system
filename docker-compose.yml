@@ -1,0 +1,37 @@
+version: "3.9"
+
+services:
+  backend:
+    build: ./backend
+    ports:
+      - "5000:5000"
+    env_file:
+      - ./backend/.env
+    depends_on:
+      - db
+      - redis
+    restart: unless-stopped  # чтобы контейнер перезапускался при ошибках
+
+  frontend:
+    build: ./frontend
+    ports:
+      - "3000:80"  # nginx отдаёт фронтенд на 3000 порту
+    restart: unless-stopped
+
+  db:
+    image: postgres:15-alpine  # лучше использовать легковесный alpine образ и конкретную версию
+    environment:
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: password
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+    restart: unless-stopped
+
+  redis:
+    image: redis:7-alpine  # явно укажи версию и легковесный образ
+    ports:
+      - "6379:6379"
+    restart: unless-stopped
+
+volumes:
+  pgdata:
