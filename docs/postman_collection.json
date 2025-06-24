@@ -1,0 +1,237 @@
+{
+  "info": {
+    "name": "SPA Comment API",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "item": [
+    {
+      "name": "User",
+      "item": [
+        {
+          "name": "Register",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"userName\": \"Septor\",\n  \"email\": \"test@example.com\",\n  \"password\": \"password123\",\n  \"confirmPassword\": \"password123\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "http://localhost:5000/user/register",
+              "protocol": "http",
+              "host": ["localhost"],
+              "port": "5000",
+              "path": ["user", "register"]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Login",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"email\": \"test@example.com\",\n  \"password\": \"password123\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "http://localhost:5000/user/login",
+              "protocol": "http",
+              "host": ["localhost"],
+              "port": "5000",
+              "path": ["user", "login"]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Logout",
+          "request": {
+            "method": "DELETE",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{accessToken}}"
+              }
+            ],
+            "url": {
+              "raw": "http://localhost:5000/user/logout",
+              "protocol": "http",
+              "host": ["localhost"],
+              "port": "5000",
+              "path": ["user", "logout"]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Refresh Token",
+          "request": {
+            "method": "PATCH",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{refreshToken}}"
+              }
+            ],
+            "url": {
+              "raw": "http://localhost:5000/user/refresh-token",
+              "protocol": "http",
+              "host": ["localhost"],
+              "port": "5000",
+              "path": ["user", "refresh-token"]
+            }
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "Comments",
+      "item": [
+        {
+          "name": "Create Comment",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "multipart/form-data"
+              }
+            ],
+            "body": {
+              "mode": "formdata",
+              "formdata": [
+                {
+                  "key": "userName",
+                  "value": "Septor",
+                  "type": "text"
+                },
+                {
+                  "key": "email",
+                  "value": "test@example.com",
+                  "type": "text"
+                },
+                {
+                  "key": "homePage",
+                  "value": "https://example.com",
+                  "type": "text"
+                },
+                {
+                  "key": "text",
+                  "value": "Це мій коментар",
+                  "type": "text"
+                },
+                {
+                  "key": "file",
+                  "type": "file",
+                  "src": "/path/to/file.txt"
+                }
+              ]
+            },
+            "url": {
+              "raw": "http://localhost:5000/comments",
+              "protocol": "http",
+              "host": ["localhost"],
+              "port": "5000",
+              "path": ["comments"]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Get Comments",
+          "request": {
+            "method": "GET",
+            "url": {
+              "raw": "http://localhost:5000/comments?limit=25&page=1&sortBy=createdAt&orderBy=asc",
+              "protocol": "http",
+              "host": ["localhost"],
+              "port": "5000",
+              "path": ["comments"],
+              "query": [
+                {
+                  "key": "limit",
+                  "value": "25"
+                },
+                {
+                  "key": "page",
+                  "value": "1"
+                },
+                {
+                  "key": "sortBy",
+                  "value": "createdAt"
+                },
+                {
+                  "key": "orderBy",
+                  "value": "asc"
+                }
+              ]
+            }
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "CAPTCHA",
+      "item": [
+        {
+          "name": "Get CAPTCHA",
+          "request": {
+            "method": "GET",
+            "url": {
+              "raw": "http://localhost:5000/captcha",
+              "protocol": "http",
+              "host": ["localhost"],
+              "port": "5000",
+              "path": ["captcha"]
+            }
+          },
+          "response": []
+        }
+      ]
+    }
+  ],
+  "auth": {
+    "type": "bearer",
+    "bearer": [
+      {
+        "key": "token",
+        "value": "{{accessToken}}",
+        "type": "string"
+      }
+    ]
+  },
+  "variable": [
+    {
+      "key": "accessToken",
+      "value": ""
+    },
+    {
+      "key": "refreshToken",
+      "value": ""
+    }
+  ]
+}
