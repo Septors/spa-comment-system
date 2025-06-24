@@ -30,7 +30,7 @@ model User {
   userName            String   @default("Anonymous")
   email               String   @unique
   password            String?
-  role                UserRole @default(USER)
+  role                UserRole @default(GUEST)
   currentRefreshToken String?
 
   profile  Profile?
@@ -62,8 +62,6 @@ model Comment {
   homePage String?
   email    String
   text String
-  captchaId String?
-  captcha String?
   fileName String?
   filePath String?
   isResizing Boolean @default(false)

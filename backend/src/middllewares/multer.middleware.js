@@ -3,27 +3,26 @@ import path from "path";
 
 const storage = multer.diskStorage({
   destination: (req, file, cb) => {
-    const uploadPath = path.resolve("uploads");
-    cb(null, uploadPath);
+    cb(null, path.resolve("uploads"));
   },
   filename: (req, file, cb) => {
     const ext = path.extname(file.originalname);
-    cb(null, `${Date.now()}-${file.originalname}${ext}`);
+    const baseName = path.basename(file.originalname, ext);
+    cb(null, `${Date.now()}-${baseName}${ext}`);
   },
 });
 
-const allowedMimeType = ["image/jpeg", "image/gif", "image/png", "text/plain"];
+const allowedMimeTypes = ["image/jpeg", "image/gif", "image/png", "text/plain"];
 
 const fileFilter = (req, file, cb) => {
-  const isValid = allowedMimeType.includes(file.mimetype);
-
-  cb(null, isValid);
+  if (allowedMimeTypes.includes(file.mimetype)) {
+    cb(null, true);
+  } else {
+    cb(new Error("Непідтримуваний тип файлу"), false);
+  }
 };
-
-const limits = { fileSize: 100 * 1024 };
 
 export const upload = multer({
   storage,
   fileFilter,
-  limits,
 });

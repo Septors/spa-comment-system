@@ -22,7 +22,8 @@ export const registerSchema = Joi.object({
       "any.required": "Пароль обовязковий",
     }),
   confirmPassword: Joi.string().valid(Joi.ref("password")).required().messages({
-    "any.required": "Паролі не співпадають",
+    "any.only": "Паролі не співпадають",
+    "any.required": "Підтвердження пароля обов'язкове",
   }),
 });
 

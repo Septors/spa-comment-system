@@ -3,11 +3,13 @@ import ApiError from "../utils/apiError.js";
 import { verifyToken } from "../utils/jwtToken.js";
 
 const checkCaptcha = async (req, res, next) => {
-  const captchaId = req.body.captchaId;
-  const captchaText = req.body.captchaText;
-  const authToken = req.headers.authorization?.split(" ")[1];
+  const { captchaId, captchaText, ...rest } = req.body;
+  const authToken = req.headers.authorization?.split(" ")[1] || req.guestToken;
+
   const verifuUser = verifyToken(authToken, "access");
+
   if (verifuUser.role === "USER") {
+    req.body = rest;
     return next();
   }
   if (!captchaId || !captchaText) {
@@ -20,12 +22,12 @@ const checkCaptcha = async (req, res, next) => {
     throw new ApiError(410, "CAPTCHA застаріла");
   }
 
-  if (captchaText !== svgCashe) {
+  if (captchaText.trim() !== svgCashe) {
     throw new ApiError(401, "Невірний текст CAPTCHA");
   }
 
   await redisClient.del(`captcha:${captchaId}`);
-
+  req.body = rest;
   next();
 };
 

@@ -1,26 +1,26 @@
+import { v4 as uuidv4 } from "uuid";
 import prisma from "../config/prisma.js";
 import { createToken } from "../utils/jwtToken.js";
 
 export const checkTypeUser = async (req, res, next) => {
-  const authHeader = req.headers.authorization;
+  const authHeader = req.headers.authorization?.split(" ")[1];
   const { userName, email } = req.body;
-  let user;
+
   if (authHeader) {
     return next();
-  } else {
-    user = await prisma.user.create({
-      data: {
-        userName,
-        email,
-      },
-    });
   }
+  const user = await prisma.user.create({
+    data: {
+      userName,
+      email: `guest-${uuidv4()}@guest.com`,
+    },
+  });
 
   const { accessToken, refreshToken } = createToken({
     id: user.id,
     role: user.role,
   });
 
-  res.status(201).json({ message: "Guest user create", accessToken });
+  req.guestToken = accessToken;
   next();
 };

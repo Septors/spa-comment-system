@@ -12,11 +12,12 @@ const createAndSetCaptcha = async () => {
 
   const key = `captcha:${captchaId}`;
   const ttl = 300;
-  await redisClient.setex(key, ttl, captcha.text.toLowerCase());
+  await redisClient.setex(key, ttl, captcha.text);
 
   return {
     id: captchaId,
     svg: captcha.data,
+    text: captcha.text,
   };
 };
 

@@ -1,6 +1,8 @@
 import Redis from "ioredis";
 
-const redisClient = new Redis("redis://localhost:6379");
+const redisClient = new Redis("redis://localhost:6379", {
+  maxRetriesPerRequest: null,
+});
 
 redisClient.on("error", (err) => {
   console.error("Redis client error", err);

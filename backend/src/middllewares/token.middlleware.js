@@ -3,21 +3,19 @@ import ApiError from "../utils/apiError.js";
 import { verifyToken } from "../utils/jwtToken.js";
 
 const decodeUserToken = async (req, res, next) => {
-  const authHeader = req.headers.authorization;
+  const authToken = req.headers.authorization?.split(" ")[1] || req.guestToken;
 
-  if (!authHeader || !authHeader.startsWith("Bearer ")) {
+  if (!authToken) {
     throw new ApiError(401, "Unauthoriaztion: Token missing  or invalid");
   }
 
-  const token = authHeader.split(" ")[1];
-
-  const isBlackList = await redisClient.get(`blackList:${token}`);
+  const isBlackList = await redisClient.get(`blackList:${authToken}`);
 
   if (isBlackList) {
     throw new ApiError(401, "Access token is blackisted");
   }
 
-  const decoded = verifyToken(token, "access");
+  const decoded = verifyToken(authToken, "access");
   if (!decoded) {
     throw new ApiError(401, "Unauthorization: Token verifycation failed ");
   }
@@ -25,7 +23,7 @@ const decodeUserToken = async (req, res, next) => {
   req.user = {
     id: decoded.id,
     role: decoded.role,
-    accessToken: token,
+    accessToken: authToken,
   };
 
   next();

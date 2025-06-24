@@ -9,8 +9,8 @@ export const commentSchema = Joi.object({
     "string.email": "Пошта має недопустимі символи",
     "any.required": "Пошта є обовязковим полем",
   }),
-  homePage: Joi.string().optional().messages({
-    "string.homePage": "Некоректне посилання",
+  homePage: Joi.string().uri().allow("").optional().messages({
+    "string.uri": "Некоректне посилання",
   }),
   parentId: Joi.number().optional(),
   text: Joi.string().max(300).required().messages({
@@ -19,5 +19,5 @@ export const commentSchema = Joi.object({
     "any.required": "Текст в комментарі є обовязковим",
   }),
   captchaId: Joi.string().optional(),
-  captcha: Joi.string().optional(),
+  captchaText: Joi.string().optional(),
 });
