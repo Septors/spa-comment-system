@@ -46,7 +46,7 @@ npm install
 npm start
 
 # 3. Запустить сервисы
-docker-compose up -d
+docker-compose up -d -build
 
 # 4. Запуск APi:
 - frontend: http://localhost:3000/
