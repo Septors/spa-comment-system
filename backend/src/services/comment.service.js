@@ -21,10 +21,6 @@ export const createCommentWithoutFile = async (
   data,
   isResizing = false
 ) => {
-  const checkParentComment = await prisma.comment.findUnique({
-    where:{id:data.parentId},
-  });
-  if(!checkParentComment){throw new ApiError(404,"Comment with this id not found")};
   const comment = await prisma.comment.create({
     data: {
       ...data,
