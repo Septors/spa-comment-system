@@ -10,33 +10,34 @@ services:
     depends_on:
       - db
       - redis
-    restart: unless-stopped  # чтобы контейнер перезапускался при ошибках
+    restart: unless-stopped
 
   frontend:
     build: ./frontend
     ports:
-      - "3000:80"  # nginx отдаёт фронтенд на 3000 порту
+      - "3000:80"
     restart: unless-stopped
     
   worker:
-    build: ./backend  
-    command: npm run worker  
+    build: ./backend
+    command: npm run worker
     env_file:
-      - ./backend/.env  
+      - ./backend/.env
     depends_on:
-      - redis 
+      - redis
     restart: unless-stopped
     
   db:
-    image: postgres:15-alpine  # лучше использовать легковесный alpine образ и конкретную версию
+    image: postgres:15-alpine
     environment:
       POSTGRES_USER: postgres
       POSTGRES_PASSWORD: password
+      POSTGRES_DB: yourdbname  
     volumes:
       - pgdata:/var/lib/postgresql/data
     restart: unless-stopped
 
-    redis:
+  redis:  
     image: redis:7-alpine
     ports:
       - "6379:6379"
@@ -45,7 +46,10 @@ services:
       interval: 5s
       timeout: 3s
       retries: 3
+    volumes:
+      - redisdata:/data 
     restart: unless-stopped
 
 volumes:
   pgdata:
+  redisdata:  
