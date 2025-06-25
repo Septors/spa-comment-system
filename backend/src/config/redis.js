@@ -1,6 +1,9 @@
 import Redis from "ioredis";
 
-const redisClient = new Redis(`redis://${process.env.REDIS_HOST}:${process.env.REDIS_PORT}`);
+const redisClient = new Redis({
+  host: process.env.REDIS_HOST, 
+  port: process.env.REDIS_PORT, 
+});
 
 redisClient.on("error", (err) => {
   console.error("Redis client error", err);
