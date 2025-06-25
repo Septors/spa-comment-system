@@ -1,6 +1,6 @@
 // events/imageReady.subscriber.js
 import Redis from "ioredis";
-import eventEmitter from "./index.js"; // ← додай .js, якщо це ES-модулі
+import eventEmitter from "./index.js"; 
 
 const redisSub = new Redis();
 
