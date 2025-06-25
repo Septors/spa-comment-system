@@ -8,7 +8,7 @@ services:
     env_file:
       - ./backend/.env
     volumes:
-      - ./backend/uploads:/app/uploads  # Добавлено монтирование uploads
+      - ./backend/uploads:/app/uploads  
     depends_on:
       - db
       - redis
@@ -26,7 +26,7 @@ services:
     env_file:
       - ./backend/.env
     volumes:
-      - ./backend/uploads:/app/uploads  # Критически важно - тот же путь, что и в backend
+      - ./backend/uploads:/app/uploads  
     depends_on:
       - redis
     restart: unless-stopped
