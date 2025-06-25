@@ -4,13 +4,6 @@ import redisClient from "../config/redis.js";
 import { lifoCashCommentList } from "../services/comment.service.js";
 import { resizeImage } from "../utils/image.utils.js";
 
-const redisConnection = {
-  host: process.env.REDIS_HOST,
-  port: Number(process.env.REDIS_PORT),
-  maxRetriesPerRequest: null,
-};
-
-
 const resizeWorker = new Worker(
   "resize-image",
   async (job) => {
@@ -55,7 +48,7 @@ const resizeWorker = new Worker(
     }
   },
   {
-    connection: redisConnection,
+    connection: redisClient,
   }
 );
 
