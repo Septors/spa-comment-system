@@ -28,7 +28,6 @@
 - **sharp** (зміна розміру файлу)
 - **websocket** (реактивний зв’язок клієнт-сервер) 
 
----
 
 ##  Запуск проекту
 
@@ -102,6 +101,7 @@ docker-compose up -d -build
 Автор: Septor
 Email: savinov.stas2001@gmail.com
 GitHub: https://github.com/Septors
+
 
 
 
